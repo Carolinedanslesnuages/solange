@@ -1,6 +1,6 @@
 {
   "name": "@carolinedanslesnuages/solange",
-  "version": "1.0.0",
+  "version": "1.1.0",
   "description": "Le poids du site vérifié à chaque pull request : JavaScript, CSS, images et polices en taille compressée, budgets, écart avec la branche principale, images lourdes et poids des nouvelles dépendances. Sans dépendance.",
   "type": "module",
   "bin": {
