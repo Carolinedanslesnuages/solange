@@ -15,7 +15,7 @@ export const KINDS = {
   images: ['.png', '.jpg', '.jpeg', '.gif', '.webp', '.avif', '.svg', '.ico'],
   polices: ['.woff', '.woff2', '.ttf', '.otf', '.eot'],
 };
-export const KIND_LABELS = { js: 'JavaScript', css: 'CSS', html: 'HTML', images: 'Images', polices: 'Polices', autres: 'Autres', total: 'Total' };
+export const KIND_LABELS = { js: 'JavaScript', css: 'CSS', html: 'HTML', images: 'Images', polices: 'Polices', autres: 'Autres', total: 'Total', 'premiere-visite': 'Première visite' };
 const TEXT_EXTENSIONS = new Set(['.js', '.mjs', '.cjs', '.css', '.html', '.htm', '.svg', '.json', '.txt', '.xml', '.map', '.webmanifest']);
 
 export function kindOf(path) {

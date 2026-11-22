@@ -12,6 +12,7 @@ Poids du site (compressé, comme sur le réseau)
   CSS            12,1 Ko  avant 12,1 Ko             =
   Images        310,0 Ko  avant 0 o         +310,0 Ko
   Total         570,1 Ko  avant 226,7 Ko   +343,4 Ko  budget 1,00 Mo ✓
+  Première visite 98,4 Ko  avant 64,0 Ko   +34,4 Ko  budget 150,0 Ko ✓
 
 À revoir
   ✗ JavaScript : 248,0 Ko, au-dessus du budget de 200,0 Ko.
@@ -21,6 +22,9 @@ Images lourdes ajoutées
 
 Nouvelles dépendances
   · date-fns 4.1.0 : 22,6 Mo
+
+Ressources chargées depuis d'autres sites (non pesées)
+  ⚠ fonts.googleapis.com : 1 adresse(s), dans index.html
 ```
 
 ## Ce qui est mesuré
@@ -28,6 +32,14 @@ Nouvelles dépendances
 - **Le site construit**, par genre : JavaScript, CSS, HTML, images, polices. Les fichiers texte
   sont mesurés compressés (gzip), comme un serveur les envoie ; les images et les polices,
   déjà compressées, telles quelles. Les cartes de source (`.map`) ne comptent pas.
+- **La première visite** : ce que la page d'entrée (`index.html`) télécharge en arrivant. Solange
+  suit ses scripts, ses feuilles de style et ses préchargements, puis ce que ces feuilles de style
+  appellent (`@import`, polices, images). Les morceaux qu'un framework charge plus tard (une autre
+  page, un panneau ouvert) n'y sont pas : c'est ce qui compte pour la première impression, quand
+  le total, lui, peut grossir sans que personne ne télécharge tout.
+- **Les ressources chargées depuis d'autres sites** (polices, scripts ou styles d'un CDN) :
+  Solange ne peut pas les peser, alors elle les signale, regroupées par site. Chacune ajoute une
+  requête, des octets, et une visite que l'autre site voit.
 - **L'écart avec la branche principale**, si l'action connaît la commande de construction.
 - **Les images ajoutées** au dépôt au-delà de 200 Ko (réglable) : une version WebP ou AVIF, à la
   taille affichée, pèse souvent bien moins.
@@ -41,7 +53,8 @@ CO₂ varient beaucoup d'une méthode à l'autre. Le poids, lui, se mesure.
 ```json
 {
   "dossier": "dist",
-  "budgets": { "js": 200, "css": 50, "images": 500, "polices": 100, "total": 1000 },
+  "entree": "index.html",
+  "budgets": { "js": 200, "css": 50, "images": 500, "polices": 100, "total": 1000, "premiere-visite": 150 },
   "imageMax": 200,
   "hausseMax": 10
 }
@@ -50,7 +63,8 @@ CO₂ varient beaucoup d'une méthode à l'autre. Le poids, lui, se mesure.
 | Réglage | Rôle |
 |---|---|
 | `dossier` | Le site construit (défaut : `dist`). |
-| `budgets` | Kilo-octets au plus, par genre : `js`, `css`, `html`, `images`, `polices`, `total`. Chacun est facultatif. |
+| `entree` | La page d'entrée, pour la première visite (défaut : `index.html`). |
+| `budgets` | Kilo-octets au plus, par genre : `js`, `css`, `html`, `images`, `polices`, `total`, et `premiere-visite`. Chacun est facultatif. |
 | `imageMax` | Poids au-delà duquel une image ajoutée bloque la PR (Ko, défaut : 200). |
 | `hausseMax` | Hausse au plus du poids total dans une PR, en pourcentage (avec la branche principale). |
 

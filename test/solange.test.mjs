@@ -8,6 +8,9 @@ import { join, dirname } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { weighFolder, kindOf, formatBytes } from '../src/measure.mjs';
 import { verdict } from '../src/budgets.mjs';
+import { htmlReferences, cssReferences } from '../src/references.mjs';
+import { weighFirstVisit } from '../src/first-visit.mjs';
+import { externalResources } from '../src/external.mjs';
 
 const BINARY = fileURLToPath(new URL('../bin/solange.mjs', import.meta.url));
 
@@ -72,7 +75,7 @@ test('commande : budget dépassé, Markdown, JSON, réglage invalide', async () 
   assert.match(markdown.stdout, /\| JavaScript \| [\d,]+ Ko \| 5,0 Ko ✗ \|/);
   assert.match(markdown.stdout, /### À revoir\n\n- JavaScript/);
   const json = JSON.parse((await runCli(['--config', config, '--dossier', site, '--json'])).stdout);
-  assert.deepEqual(Object.keys(json), ['genres', 'problemes', 'images', 'dependances', 'echec']);
+  assert.deepEqual(Object.keys(json), ['genres', 'problemes', 'images', 'dependances', 'premiereVisite', 'externes', 'echec']);
   assert.equal(json.echec, true);
   writeFileSync(config, JSON.stringify({ budgets: { gifs: 10 } }));
   assert.match((await runCli(['--config', config, '--dossier', site])).stderr, /budget inconnu « gifs »/);
@@ -115,4 +118,57 @@ test('images lourdes ajoutées et poids des nouvelles dépendances', async () =>
   } finally {
     registry.close();
   }
+});
+
+test('références : ce que la page charge, pas ses liens ni ses indices de connexion', () => {
+  const html = `<link rel="preconnect" href="https://fonts.gstatic.com"><link rel="stylesheet" href="/assets/a.css">
+    <link rel="modulepreload" href="./assets/b.js"><script type="module" src=/assets/c.js></script>
+    <a href="https://github.com/x">GitHub</a><img src="logo.png" alt=""><style>@import url("https://cdn.example/x.css");</style>`;
+  assert.deepEqual(htmlReferences(html), ['/assets/c.js', '/assets/a.css', './assets/b.js', 'logo.png', 'https://cdn.example/x.css']);
+  assert.deepEqual(cssReferences('@import "base.css"; .a{background:url(img/fond.webp)} .b{background:url(data:image/png;base64,AA)} @font-face{src:url("../f.woff2")}'), ['base.css', 'img/fond.webp', '../f.woff2']);
+});
+
+test('première visite : la page d\'entrée, ses fichiers et ce que sa CSS appelle, sans les morceaux chargés plus tard', () => {
+  const folder = folderWith({
+    'index.html': '<link rel="stylesheet" href="/assets/style.css"><script type="module" src="/assets/entree.js"></script>',
+    'assets/style.css': '@font-face{src:url(police.woff2)} body{margin:0}',
+    'assets/police.woff2': Buffer.alloc(3000, 1),
+    'assets/entree.js': code(4000),
+    'assets/plus-tard.js': code(40000),
+  });
+  const firstVisit = weighFirstVisit(folder);
+  assert.deepEqual(firstVisit.files.map((file) => file.path).sort(), ['assets/entree.js', 'assets/police.woff2', 'assets/style.css', 'index.html']);
+  const whole = weighFolder(folder);
+  assert.ok(firstVisit.bytes < whole.kinds.total, 'le morceau chargé plus tard ne compte pas');
+  assert.equal(weighFirstVisit(folderWith({ 'a.js': 'x' })), null, 'sans page d\'entrée : pas de première visite');
+  // A site published under a base path (/depot/assets/…)
+  const underBase = folderWith({ 'index.html': '<script src="/depot/assets/e.js"></script>', 'assets/e.js': code(2000) });
+  assert.deepEqual(weighFirstVisit(underBase).files.map((file) => file.path).sort(), ['assets/e.js', 'index.html']);
+});
+
+test('ressources externes : regroupées par site, dans le HTML et la CSS', () => {
+  const folder = folderWith({
+    'index.html': '<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323"><script src="//cdn.example/lib.js"></script><a href="https://github.com/x">lien</a>',
+    'assets/style.css': '@import url("https://fonts.googleapis.com/css2?family=Fredoka");',
+  });
+  const external = externalResources(folder);
+  assert.deepEqual(external.map((group) => group.host), ['cdn.example', 'fonts.googleapis.com']);
+  assert.deepEqual(external[1].files, ['assets/style.css', 'index.html']);
+  assert.equal(external[0].addresses[0], 'https://cdn.example/lib.js');
+});
+
+test('commande : budget de première visite et ressources externes dans le rapport', async () => {
+  const folder = folderWith({
+    'dist/index.html': '<script src="/assets/e.js"></script><link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=VT323">',
+    'dist/assets/e.js': code(20000),
+    'solange.json': JSON.stringify({ budgets: { 'premiere-visite': 1 } }),
+  });
+  const result = await runCli(['--json'], { cwd: folder });
+  const report = JSON.parse(result.stdout);
+  assert.equal(result.status, 1, 'budget de première visite dépassé');
+  assert.ok(report.problemes.some((problem) => problem.startsWith('Première visite')));
+  assert.equal(report.externes[0].site, 'fonts.googleapis.com');
+  const markdown = await runCli(['--markdown'], { cwd: folder });
+  assert.match(markdown.stdout, /Ressources chargées depuis d'autres sites/);
+  assert.match(markdown.stdout, /\| Première visite \|/);
 });
