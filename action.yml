@@ -1,5 +1,5 @@
 name: Solange — poids du site
-description: "Pèse le site construit (JavaScript, CSS, HTML, images, polices) en taille compressée, le compare aux budgets de solange.json et, avec la commande de construction, à la branche principale. Signale les images lourdes et le poids des nouvelles dépendances."
+description: "Pèse le site construit (JS, CSS, images, polices) en taille compressée et le compare aux budgets et à la branche principale."
 author: Carolinedanslesnuages
 
 inputs:
@@ -48,3 +48,7 @@ runs:
         cat "$report" >> "$GITHUB_STEP_SUMMARY"
         cat "$report"
         exit "$status"
+
+branding:
+  icon: bar-chart-2
+  color: purple

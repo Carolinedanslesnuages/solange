@@ -48,6 +48,31 @@ Ressources chargées depuis d'autres sites (non pesées)
 Solange donne des poids, pas d'équivalent carbone : les facteurs de conversion du poids en
 CO₂ varient beaucoup d'une méthode à l'autre. Le poids, lui, se mesure.
 
+## À quoi ça ressemble
+
+Le site [carolinedanslesnuages.github.io](https://carolinedanslesnuages.github.io), construit :
+
+```text
+Poids du site (compressé, comme sur le réseau)
+  JavaScript          72,8 Ko  budget 90,0 Ko ✓
+  CSS                  4,9 Ko  budget 8,0 Ko ✓
+  HTML                  756 o  budget 2,0 Ko ✓
+  Total               78,4 Ko  budget 100,0 Ko ✓
+  Première visite     60,2 Ko  budget 75,0 Ko ✓
+
+Ressources chargées depuis d'autres sites (non pesées)
+  ⚠ fonts.googleapis.com : 1 adresse(s), dans index.html
+
+Fichiers les plus lourds
+     54,6 Ko  assets/index-CBxH7v7D.js
+      4,9 Ko  assets/index-UFvOH4aH.css
+      2,4 Ko  assets/marie-Dzhhc6e5.js
+      2,0 Ko  assets/simone-CbhjESDj.js
+      1,8 Ko  assets/irene-B-YxZDxi.js
+```
+
+Dans une pull request, le même tableau s'affiche dans le résumé du contrôle, avec l'écart avec la branche principale.
+
 ## Les budgets : `solange.json`
 
 ```json
