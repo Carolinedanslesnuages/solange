@@ -1,13 +1,33 @@
 {
   "name": "@carolinedanslesnuages/solange",
-  "version": "0.0.0",
+  "version": "1.0.0",
   "description": "Le poids du site vérifié à chaque pull request : JavaScript, CSS, images et polices en taille compressée, budgets, écart avec la branche principale, images lourdes et poids des nouvelles dépendances. Sans dépendance.",
   "type": "module",
-  "bin": { "solange": "bin/solange.mjs" },
-  "files": ["bin", "src", "action.yml"],
-  "engines": { "node": ">=20" },
-  "scripts": { "test": "node --test test/*.test.mjs" },
-  "keywords": ["web-performance", "sobriety", "eco-design", "bundle-size", "budget", "github-action"],
-  "repository": { "type": "git", "url": "git+https://github.com/Carolinedanslesnuages/solange.git" },
+  "bin": {
+    "solange": "bin/solange.mjs"
+  },
+  "files": [
+    "bin",
+    "src",
+    "action.yml"
+  ],
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "test": "node --test test/*.test.mjs"
+  },
+  "keywords": [
+    "web-performance",
+    "sobriety",
+    "eco-design",
+    "bundle-size",
+    "budget",
+    "github-action"
+  ],
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/Carolinedanslesnuages/solange.git"
+  },
   "license": "MIT"
 }
