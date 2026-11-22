@@ -1,0 +1,50 @@
+name: Solange — poids du site
+description: "Pèse le site construit (JavaScript, CSS, HTML, images, polices) en taille compressée, le compare aux budgets de solange.json et, avec la commande de construction, à la branche principale. Signale les images lourdes et le poids des nouvelles dépendances."
+author: Carolinedanslesnuages
+
+inputs:
+  dossier:
+    description: "Site construit à peser (par défaut : « dossier » de solange.json, sinon dist)."
+    default: ""
+  construction:
+    description: "Commande qui construit le site (ex. « npm ci && npm run build ») : avec elle, Solange construit aussi la branche principale et donne l'écart."
+    default: ""
+  config:
+    description: "Fichier des budgets."
+    default: "solange.json"
+
+runs:
+  using: composite
+  steps:
+    - name: Peser le site
+      shell: bash
+      env:
+        SITE_FOLDER: ${{ inputs.dossier }}
+        BUILD_COMMAND: ${{ inputs.construction }}
+        CONFIG: ${{ inputs.config }}
+        BASE: ${{ github.event.pull_request.base.sha }}
+      run: |
+        options=(--config "$CONFIG")
+        [ -n "$SITE_FOLDER" ] && options+=(--dossier "$SITE_FOLDER")
+        if [ -n "$BASE" ]; then
+          if [ "$(git rev-parse --is-shallow-repository 2>/dev/null)" != "false" ]; then
+            echo "::error title=Solange::Historique incomplet : ajoutez « actions/checkout » avec « fetch-depth: 0 » avant ce contrôle."
+            exit 1
+          fi
+          options+=(--base "$BASE")
+          if [ -n "$BUILD_COMMAND" ]; then
+            # The main branch is built in a separate folder, to measure what this PR adds.
+            base_folder="$RUNNER_TEMP/solange-base"
+            git worktree add --quiet --detach "$base_folder" "$BASE"
+            (cd "$base_folder" && eval "$BUILD_COMMAND") > "$RUNNER_TEMP/solange-base.log" 2>&1 \
+              || echo "::warning title=Solange::La branche principale ne se construit pas : pas d'écart cette fois (journal : solange-base.log)."
+            folder_name="${SITE_FOLDER:-$(node -e "try{console.log(JSON.parse(require('fs').readFileSync('$CONFIG','utf8')).dossier||'dist')}catch{console.log('dist')}")}"
+            [ -d "$base_folder/$folder_name" ] && options+=(--base-dossier "$base_folder/$folder_name")
+          fi
+        fi
+        report="$RUNNER_TEMP/solange.md"
+        status=0
+        node "${{ github.action_path }}/bin/solange.mjs" "${options[@]}" --markdown > "$report" || status=$?
+        cat "$report" >> "$GITHUB_STEP_SUMMARY"
+        cat "$report"
+        exit "$status"

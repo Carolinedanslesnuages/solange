@@ -1,0 +1,117 @@
+# Solange
+
+Le poids du site, vérifié à chaque pull request.
+
+Chaque kilo-octet ajouté est téléchargé par chaque visiteuse et chaque visiteur, à chaque
+visite, souvent sur un téléphone et un réseau lent. Solange pèse le site construit, le compare
+à vos budgets et à la branche principale, et dit ce qu'une PR ajoute.
+
+```text
+Poids du site (compressé, comme sur le réseau)
+  JavaScript    248,0 Ko  avant 214,6 Ko     +33,4 Ko  budget 200,0 Ko ✗
+  CSS            12,1 Ko  avant 12,1 Ko             =
+  Images        310,0 Ko  avant 0 o         +310,0 Ko
+  Total         570,1 Ko  avant 226,7 Ko   +343,4 Ko  budget 1,00 Mo ✓
+
+À revoir
+  ✗ JavaScript : 248,0 Ko, au-dessus du budget de 200,0 Ko.
+
+Images lourdes ajoutées
+  ⚠ public/photo-equipe.png : 310,0 Ko
+
+Nouvelles dépendances
+  · date-fns 4.1.0 : 22,6 Mo
+```
+
+## Ce qui est mesuré
+
+- **Le site construit**, par genre : JavaScript, CSS, HTML, images, polices. Les fichiers texte
+  sont mesurés compressés (gzip), comme un serveur les envoie ; les images et les polices,
+  déjà compressées, telles quelles. Les cartes de source (`.map`) ne comptent pas.
+- **L'écart avec la branche principale**, si l'action connaît la commande de construction.
+- **Les images ajoutées** au dépôt au-delà de 200 Ko (réglable) : une version WebP ou AVIF, à la
+  taille affichée, pèse souvent bien moins.
+- **Le poids d'installation des nouvelles dépendances**, lu dans le registre npm.
+
+Solange donne des poids, pas d'équivalent carbone : les facteurs de conversion du poids en
+CO₂ varient beaucoup d'une méthode à l'autre. Le poids, lui, se mesure.
+
+## Les budgets : `solange.json`
+
+```json
+{
+  "dossier": "dist",
+  "budgets": { "js": 200, "css": 50, "images": 500, "polices": 100, "total": 1000 },
+  "imageMax": 200,
+  "hausseMax": 10
+}
+```
+
+| Réglage | Rôle |
+|---|---|
+| `dossier` | Le site construit (défaut : `dist`). |
+| `budgets` | Kilo-octets au plus, par genre : `js`, `css`, `html`, `images`, `polices`, `total`. Chacun est facultatif. |
+| `imageMax` | Poids au-delà duquel une image ajoutée bloque la PR (Ko, défaut : 200). |
+| `hausseMax` | Hausse au plus du poids total dans une PR, en pourcentage (avec la branche principale). |
+
+Sans `solange.json`, Solange mesure et informe, sans rien bloquer, sauf une image trop lourde.
+
+## Dans une pull request (GitHub Actions)
+
+```yaml
+jobs:
+  poids:
+    name: Poids du site (Solange)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v7.0.1
+        with:
+          fetch-depth: 0
+      - run: npm ci && npm run build
+      - uses: Carolinedanslesnuages/solange@v1
+        with:
+          construction: npm ci && npm run build
+```
+
+Avec `construction`, Solange construit aussi la branche principale dans un dossier à part et
+donne l'écart. Le tableau arrive dans le résumé du contrôle ; un budget dépassé ou une image
+trop lourde le fait échouer.
+
+## Sur votre ordinateur
+
+```sh
+npm run build
+npx github:Carolinedanslesnuages/solange                    # le dossier dist
+npx github:Carolinedanslesnuages/solange --base main        # + images et dépendances ajoutées
+```
+
+| Option | Rôle |
+|---|---|
+| `--dossier <chemin>` | Site construit (défaut : celui de `solange.json`, sinon `dist`). |
+| `--base-dossier <chemin>` | Le même site construit depuis la branche principale, pour l'écart. |
+| `--base <ref>` | Branche ou commit de départ : images lourdes et nouvelles dépendances. |
+| `--config <fichier>` | Budgets (défaut : `./solange.json`). |
+| `--markdown`, `--json` | Autre format de sortie. |
+
+Sans dépendance. Seul le registre public npm est interrogé, et seulement pour les nouvelles
+dépendances.
+
+## Pourquoi Solange
+
+[Solange Fernex](https://fr.wikipedia.org/wiki/Solange_Fernex), pionnière de l'écologie
+politique en France, militante antinucléaire et pacifiste, députée européenne. Elle a porté
+l'idée qu'on peut vivre et produire en consommant moins.
+
+## Développer Solange
+
+```sh
+npm test
+```
+
+Les tests pèsent des sites jetables : texte compressé, images, cartes de source ignorées,
+budgets, écart avec la branche principale, images lourdes ajoutées, et un faux registre npm
+pour les dépendances.
+
+## Licence
+
+[MIT](LICENSE).
