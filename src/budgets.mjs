@@ -2,22 +2,24 @@
  * Budgets (solange.json) and the verdict of a measurement. Budgets are in kilobytes (Ko, 1 000
  * bytes) of network size, per kind; any kind may be left out.
  *
- *   { "dossier": "dist", "budgets": { "js": 200, "css": 50, "images": 500, "total": 1000 },
+ *   { "dossier": "dist", "entree": "index.html",
+ *     "budgets": { "js": 200, "css": 50, "images": 500, "total": 1000, "premiere-visite": 150 },
  *     "imageMax": 200, "hausseMax": 10 }
  *
+ * premiere-visite: what the entry page downloads on arrival (see first-visit.mjs).
  * hausseMax: largest increase allowed in one pull request, in percent of the total (with a base).
  */
 import { readFileSync, existsSync } from 'node:fs';
 import { KIND_LABELS, formatBytes } from './measure.mjs';
 
-export const DEFAULT_SETTINGS = { dossier: 'dist', budgets: {}, imageMax: 200, hausseMax: null };
+export const DEFAULT_SETTINGS = { dossier: 'dist', entree: 'index.html', budgets: {}, imageMax: 200, hausseMax: null };
 
 export function readSettings(path) {
   if (!existsSync(path)) return { ...DEFAULT_SETTINGS };
   try {
     const settings = { ...DEFAULT_SETTINGS, ...JSON.parse(readFileSync(path, 'utf8')) };
     for (const [kind, limit] of Object.entries(settings.budgets)) {
-      if (!KIND_LABELS[kind] || kind === 'autres') throw new Error(`budget inconnu « ${kind} » (possibles : js, css, html, images, polices, total)`);
+      if (!KIND_LABELS[kind] || kind === 'autres') throw new Error(`budget inconnu « ${kind} » (possibles : js, css, html, images, polices, total, premiere-visite)`);
       if (!Number.isFinite(limit) || limit <= 0) throw new Error(`le budget « ${kind} » doit être un nombre de Ko positif`);
     }
     return settings;
