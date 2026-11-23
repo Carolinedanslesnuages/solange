@@ -120,8 +120,8 @@ trop lourde le fait échouer.
 
 ```sh
 npm run build
-npx github:Carolinedanslesnuages/solange                    # le dossier dist
-npx github:Carolinedanslesnuages/solange --base main        # + images et dépendances ajoutées
+npx @carolinedanslesnuages/solange                    # le dossier dist
+npx @carolinedanslesnuages/solange --base main        # + images et dépendances ajoutées
 ```
 
 | Option | Rôle |
